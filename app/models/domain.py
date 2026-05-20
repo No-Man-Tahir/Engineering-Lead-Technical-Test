@@ -8,3 +8,12 @@ class StoredChunk:
     content: str
     embedding: list[float]
     title: str | None = None
+
+
+@dataclass(frozen=True)
+class RetrievedChunk:
+    document_id: str
+    chunk_id: str
+    content: str
+    score: float
+    title: str | None = None
