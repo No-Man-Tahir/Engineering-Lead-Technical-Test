@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException, status
 from app.config import get_settings
 from app.models.requests import AskRequest
 from app.models.responses import AskResponse
+from app.services.llm_service import generate_answer_from_context
 from app.services.retrieval_service import retrieve_relevant_chunks
 from app.services.vector_store import vector_store
 
@@ -52,8 +53,27 @@ def ask_question(payload: AskRequest) -> AskResponse:
             detail=str(exc),
         ) from exc
 
+    if not retrieved_chunks:
+        return AskResponse(
+            answer="The document does not provide enough information to answer this question.",
+            sources=[],
+        )
+
+    try:
+        answer = generate_answer_from_context(
+            question=question,
+            chunks=retrieved_chunks,
+            api_key=settings.openai_api_key,
+            model=settings.openai_chat_model,
+        )
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=str(exc),
+        ) from exc
+
     return AskResponse(
-        answer="Relevant context retrieved successfully. Answer generation will be added next.",
+        answer=answer,
         sources=[
             {
                 "document_id": chunk.document_id,
