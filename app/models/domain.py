@@ -17,3 +17,10 @@ class RetrievedChunk:
     content: str
     score: float
     title: str | None = None
+
+
+@dataclass(frozen=True)
+class StoredDocument:
+    document_id: str
+    title: str | None
+    chunks_created: int

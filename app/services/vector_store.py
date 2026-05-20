@@ -1,6 +1,6 @@
 from math import sqrt
 
-from app.models.domain import RetrievedChunk, StoredChunk
+from app.models.domain import RetrievedChunk, StoredChunk, StoredDocument
 
 
 class InMemoryVectorStore:
@@ -31,6 +31,21 @@ class InMemoryVectorStore:
 
     def get_document_chunks(self, document_id: str) -> list[StoredChunk]:
         return list(self._documents.get(document_id, []))
+
+    def list_documents(self) -> list[StoredDocument]:
+        documents: list[StoredDocument] = []
+        for document_id, chunks in self._documents.items():
+            title = chunks[0].title if chunks else None
+            documents.append(
+                StoredDocument(
+                    document_id=document_id,
+                    title=title,
+                    chunks_created=len(chunks),
+                )
+            )
+
+        documents.sort(key=lambda document: document.document_id)
+        return documents
 
     def search(
         self,

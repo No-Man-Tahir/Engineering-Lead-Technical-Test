@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document QA API</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f1ea;
+      --panel: #fffdf8;
+      --panel-strong: #f7f0e5;
+      --panel-soft: #fbf7ef;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --accent: #8b5cf6;
+      --accent-strong: #6d28d9;
+      --accent-soft: rgba(139, 92, 246, 0.12);
+      --border: #e7dcc8;
+      --success: #166534;
+      --success-bg: #dcfce7;
+      --error: #b91c1c;
+      --error-bg: #fee2e2;
+      --shadow: 0 20px 40px rgba(91, 63, 34, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(139, 92, 246, 0.10), transparent 32%),
+        linear-gradient(180deg, #f8f5ef 0%, var(--bg) 100%);
+      color: var(--text);
+    }
+
+    .shell {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+    }
+
+    .hero {
+      display: grid;
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      width: fit-content;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3.8rem);
+      line-height: 1;
+      letter-spacing: -0.04em;
+      max-width: 850px;
+    }
+
+    .subtitle {
+      margin: 0;
+      max-width: 820px;
+      color: var(--muted);
+      font-size: 1.05rem;
+      line-height: 1.6;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 360px minmax(0, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    .column {
+      display: grid;
+      gap: 20px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 22px 22px 0;
+    }
+
+    .panel-body {
+      padding: 22px;
+    }
+
+    .panel h2 {
+      margin: 0 0 8px;
+      font-size: 1.15rem;
+    }
+
+    .panel p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    form {
+      display: grid;
+      gap: 16px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    label {
+      font-size: 0.93rem;
+      font-weight: 600;
+    }
+
+    input,
+    textarea,
+    button {
+      font: inherit;
+    }
+
+    input,
+    textarea {
+      width: 100%;
+      padding: 13px 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: white;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    input:focus,
+    textarea:focus {
+      border-color: rgba(139, 92, 246, 0.65);
+      box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.12);
+    }
+
+    textarea {
+      min-height: 148px;
+      resize: vertical;
+    }
+
+    .file-input {
+      padding: 10px;
+      background: var(--panel-strong);
+    }
+
+    .button-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 13px 18px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.15s ease, opacity 0.15s ease;
+    }
+
+    button:hover:not(:disabled) {
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .secondary {
+      background: white;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .status,
+    .result-card,
+    .source-list,
+    .doc-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .status {
+      margin-top: 18px;
+      min-height: 24px;
+    }
+
+    .message {
+      padding: 12px 14px;
+      border-radius: 14px;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .message.success {
+      background: var(--success-bg);
+      color: var(--success);
+    }
+
+    .message.error {
+      background: var(--error-bg);
+      color: var(--error);
+    }
+
+    .doc-list {
+      margin-top: 18px;
+    }
+
+    .doc-card {
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--border);
+      background: white;
+      color: var(--text);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: none;
+    }
+
+    .doc-card.active {
+      border-color: rgba(139, 92, 246, 0.45);
+      background: var(--panel-soft);
+      box-shadow: inset 0 0 0 1px rgba(139, 92, 246, 0.15);
+    }
+
+    .doc-card:hover:not(:disabled) {
+      transform: none;
+      border-color: rgba(139, 92, 246, 0.35);
+    }
+
+    .doc-title {
+      display: block;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .doc-subtitle {
+      display: block;
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin-bottom: 10px;
+      word-break: break-word;
+    }
+
+    .doc-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .pill {
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: var(--panel-strong);
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .empty-state {
+      padding: 18px;
+      border: 1px dashed var(--border);
+      border-radius: 18px;
+      background: var(--panel-soft);
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .chat-header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 18px;
+    }
+
+    .chat-document {
+      display: grid;
+      gap: 4px;
+    }
+
+    .chat-document strong {
+      font-size: 1rem;
+    }
+
+    .chat-document span {
+      color: var(--muted);
+      font-size: 0.93rem;
+    }
+
+    .disabled-note {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+
+    .result-card {
+      margin-top: 18px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background: white;
+    }
+
+    .result-card h3,
+    .source-list h3 {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .answer {
+      color: var(--text);
+      line-height: 1.7;
+      white-space: pre-wrap;
+    }
+
+    .source-list {
+      margin-top: 16px;
+    }
+
+    .source-item {
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: var(--panel-strong);
+    }
+
+    .source-item strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 0.95rem;
+    }
+
+    .source-item span {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    code {
+      font-family: Consolas, monospace;
+      font-size: 0.95em;
+    }
+
+    @media (max-width: 980px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 860px) {
+      .shell {
+        padding: 20px 14px 36px;
+      }
+
+      .panel-header,
+      .panel-body {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <span class="eyebrow">Document QA</span>
+      <h1>Build a small document library, then chat with any ingested file.</h1>
+      <p class="subtitle">
+        Upload UTF-8 <code>.txt</code> files into the library. Click any ingested document to make it active,
+        then ask grounded questions against that specific document and inspect the retrieved sources.
+      </p>
+    </section>
+
+    <section class="grid">
+      <div class="column">
+        <article class="panel">
+          <div class="panel-header">
+            <h2>Upload Document</h2>
+            <p>Add a new text document to the library with a document id and optional title.</p>
+          </div>
+          <div class="panel-body">
+            <form id="ingest-form">
+              <div class="field">
+                <label for="document-id">Document ID</label>
+                <input id="document-id" name="document_id" type="text" placeholder="refund-policy" required>
+              </div>
+
+              <div class="field">
+                <label for="title">Title</label>
+                <input id="title" name="title" type="text" placeholder="Refund Policy">
+              </div>
+
+              <div class="field">
+                <label for="file">Text File</label>
+                <input class="file-input" id="file" name="file" type="file" accept=".txt,text/plain" required>
+              </div>
+
+              <div class="button-row">
+                <button id="ingest-button" type="submit">Upload And Process</button>
+                <button id="reset-button" class="secondary" type="button">Reset</button>
+              </div>
+            </form>
+
+            <div id="ingest-status" class="status"></div>
+          </div>
+        </article>
+
+        <article class="panel">
+          <div class="panel-header">
+            <h2>Document Library</h2>
+            <p>Choose which ingested document you want to ask questions about.</p>
+          </div>
+          <div class="panel-body">
+            <div id="document-list" class="doc-list"></div>
+          </div>
+        </article>
+      </div>
+
+      <article class="panel">
+        <div class="panel-header">
+          <h2>Document Chat</h2>
+          <p>The chat stays scoped to the document you select from the library.</p>
+        </div>
+        <div class="panel-body">
+          <div class="chat-header">
+            <div class="chat-document">
+              <strong id="active-title">No document selected</strong>
+              <span id="active-meta">Select a document from the library to begin.</span>
+            </div>
+            <span id="active-pill" class="pill">Idle</span>
+          </div>
+
+          <form id="ask-form">
+            <div class="field">
+              <label for="question">Question</label>
+              <textarea id="question" name="question" placeholder="What does the document say about refunds?" required disabled></textarea>
+            </div>
+
+            <div class="button-row">
+              <button id="ask-button" type="submit" disabled>Ask Selected Document</button>
+            </div>
+          </form>
+
+          <p id="ask-note" class="disabled-note">Select a document from the library first.</p>
+
+          <div id="answer-panel" class="result-card" hidden>
+            <h3>Answer</h3>
+            <div id="answer-text" class="answer"></div>
+            <div id="source-panel" class="source-list"></div>
+          </div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const ingestForm = document.getElementById('ingest-form');
+    const askForm = document.getElementById('ask-form');
+    const ingestStatus = document.getElementById('ingest-status');
+    const documentList = document.getElementById('document-list');
+    const answerPanel = document.getElementById('answer-panel');
+    const answerText = document.getElementById('answer-text');
+    const sourcePanel = document.getElementById('source-panel');
+    const askButton = document.getElementById('ask-button');
+    const askNote = document.getElementById('ask-note');
+    const questionInput = document.getElementById('question');
+    const resetButton = document.getElementById('reset-button');
+    const ingestButton = document.getElementById('ingest-button');
+    const activeTitle = document.getElementById('active-title');
+    const activeMeta = document.getElementById('active-meta');
+    const activePill = document.getElementById('active-pill');
+
+    let documents = [];
+    let activeDocumentId = '';
+
+    function escapeHtml(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function renderMessage(target, message, type) {
+      target.innerHTML = `<div class="message ${type}">${message}</div>`;
+    }
+
+    function resetAnswerPanel() {
+      answerPanel.hidden = true;
+      answerText.textContent = '';
+      sourcePanel.innerHTML = '';
+    }
+
+    function renderSources(sources) {
+      if (!sources.length) {
+        sourcePanel.innerHTML = '';
+        return;
+      }
+
+      const items = sources.map((source) => `
+        <div class="source-item">
+          <strong>${escapeHtml(source.chunk_id)}</strong>
+          <span>Document: ${escapeHtml(source.document_id)} | Score: ${Number(source.score).toFixed(3)}</span>
+        </div>
+      `).join('');
+
+      sourcePanel.innerHTML = `<h3>Sources</h3>${items}`;
+    }
+
+    function setActiveDocument(documentId) {
+      activeDocumentId = documentId;
+      const activeDocument = documents.find((document) => document.document_id === documentId);
+
+      if (!activeDocument) {
+        activeTitle.textContent = 'No document selected';
+        activeMeta.textContent = 'Select a document from the library to begin.';
+        activePill.textContent = 'Idle';
+        askButton.disabled = true;
+        questionInput.disabled = true;
+        askNote.textContent = 'Select a document from the library first.';
+        questionInput.value = '';
+        resetAnswerPanel();
+        renderDocumentList();
+        return;
+      }
+
+      activeTitle.textContent = activeDocument.title || activeDocument.document_id;
+      activeMeta.textContent = `${activeDocument.document_id} • ${activeDocument.chunks_created} chunk(s)`;
+      activePill.textContent = 'Active';
+      askButton.disabled = false;
+      questionInput.disabled = false;
+      askNote.textContent = `Questions will be answered only from ${activeDocument.document_id}.`;
+      resetAnswerPanel();
+      renderDocumentList();
+      questionInput.focus();
+    }
+
+    function renderDocumentList() {
+      if (!documents.length) {
+        documentList.innerHTML = `
+          <div class="empty-state">
+            No documents have been ingested yet. Upload a <code>.txt</code> file to start building the library.
+          </div>
+        `;
+        return;
+      }
+
+      documentList.innerHTML = documents.map((document) => {
+        const isActive = document.document_id === activeDocumentId;
+        return `
+          <button
+            type="button"
+            class="doc-card ${isActive ? 'active' : ''}"
+            data-document-id="${escapeHtml(document.document_id)}"
+          >
+            <span class="doc-title">${escapeHtml(document.title || document.document_id)}</span>
+            <span class="doc-subtitle">${escapeHtml(document.document_id)}</span>
+            <div class="doc-meta">
+              <span class="pill">${document.chunks_created} chunk(s)</span>
+              ${isActive ? '<span class="pill">selected</span>' : ''}
+            </div>
+          </button>
+        `;
+      }).join('');
+
+      documentList.querySelectorAll('[data-document-id]').forEach((element) => {
+        element.addEventListener('click', () => {
+          setActiveDocument(element.dataset.documentId);
+        });
+      });
+    }
+
+    async function loadDocuments(preferredDocumentId = '') {
+      try {
+        const response = await fetch('/documents');
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error('Failed to load documents.');
+        }
+
+        documents = payload;
+        renderDocumentList();
+
+        if (preferredDocumentId && documents.some((document) => document.document_id === preferredDocumentId)) {
+          setActiveDocument(preferredDocumentId);
+          return;
+        }
+
+        if (activeDocumentId && documents.some((document) => document.document_id === activeDocumentId)) {
+          setActiveDocument(activeDocumentId);
+          return;
+        }
+
+        if (!documents.some((document) => document.document_id === activeDocumentId)) {
+          setActiveDocument('');
+        }
+      } catch (error) {
+        documentList.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
+      }
+    }
+
+    ingestForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      ingestButton.disabled = true;
+      ingestStatus.innerHTML = '';
+
+      const formData = new FormData(ingestForm);
+
+      try {
+        const response = await fetch('/ingest', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.detail || 'Failed to ingest document.');
+        }
+
+        renderMessage(
+          ingestStatus,
+          `${payload.message} Document <strong>${escapeHtml(payload.document_id)}</strong> created ${payload.chunks_created} chunk(s).`,
+          'success'
+        );
+        await loadDocuments(payload.document_id);
+        ingestForm.reset();
+      } catch (error) {
+        renderMessage(ingestStatus, escapeHtml(error.message), 'error');
+      } finally {
+        ingestButton.disabled = false;
+      }
+    });
+
+    askForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!activeDocumentId) {
+        return;
+      }
+
+      askButton.disabled = true;
+      resetAnswerPanel();
+
+      try {
+        const response = await fetch('/ask', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            document_id: activeDocumentId,
+            question: questionInput.value,
+          }),
+        });
+
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.detail || 'Failed to answer question.');
+        }
+
+        answerText.textContent = payload.answer;
+        renderSources(payload.sources || []);
+        answerPanel.hidden = false;
+      } catch (error) {
+        answerText.textContent = error.message;
+        sourcePanel.innerHTML = '';
+        answerPanel.hidden = false;
+      } finally {
+        askButton.disabled = false;
+      }
+    });
+
+    resetButton.addEventListener('click', () => {
+      ingestForm.reset();
+      ingestStatus.innerHTML = '';
+    });
+
+    loadDocuments();
+  </script>
+</body>
+</html>
