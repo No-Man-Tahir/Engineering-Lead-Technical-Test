@@ -77,6 +77,7 @@ def ask_question(payload: AskRequest) -> AskResponse:
         sources=[
             {
                 "document_id": chunk.document_id,
+                "title": chunk.title,
                 "chunk_id": chunk.chunk_id,
                 "score": chunk.score,
             }

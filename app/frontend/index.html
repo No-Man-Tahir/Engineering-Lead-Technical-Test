@@ -229,6 +229,11 @@
       color: var(--error);
     }
 
+    .message.loading {
+      background: var(--accent-soft);
+      color: var(--accent-strong);
+    }
+
     .doc-list {
       margin-top: 18px;
     }
@@ -406,15 +411,10 @@
         <article class="panel">
           <div class="panel-header">
             <h2>Upload Document</h2>
-            <p>Add a new text document to the library with a document id and optional title.</p>
+            <p>Add a new text document to the library. The backend will generate the document id automatically.</p>
           </div>
           <div class="panel-body">
             <form id="ingest-form">
-              <div class="field">
-                <label for="document-id">Document ID</label>
-                <input id="document-id" name="document_id" type="text" placeholder="refund-policy" required>
-              </div>
-
               <div class="field">
                 <label for="title">Title</label>
                 <input id="title" name="title" type="text" placeholder="Refund Policy">
@@ -531,7 +531,7 @@
       const items = sources.map((source) => `
         <div class="source-item">
           <strong>${escapeHtml(source.chunk_id)}</strong>
-          <span>Document: ${escapeHtml(source.document_id)} | Score: ${Number(source.score).toFixed(3)}</span>
+          <span>Document: ${escapeHtml(source.title || source.document_id)} | Score: ${Number(source.score).toFixed(3)}</span>
         </div>
       `).join('');
 
@@ -564,6 +564,28 @@
       resetAnswerPanel();
       renderDocumentList();
       questionInput.focus();
+    }
+
+    function setAskLoadingState(isLoading) {
+      askButton.disabled = isLoading || !activeDocumentId;
+      askButton.textContent = isLoading ? 'Generating Answer...' : 'Ask Selected Document';
+      activePill.textContent = isLoading ? 'Answering' : activeDocumentId ? 'Active' : 'Idle';
+      if (isLoading) {
+        askNote.textContent = `Generating answer from ${activeDocumentId}...`;
+      } else if (activeDocumentId) {
+        askNote.textContent = `Questions will be answered only from ${activeDocumentId}.`;
+      } else {
+        askNote.textContent = 'Select a document from the library first.';
+      }
+    }
+
+    function setIngestLoadingState(isLoading) {
+      ingestButton.disabled = isLoading;
+      resetButton.disabled = isLoading;
+      ingestButton.textContent = isLoading ? 'Uploading...' : 'Upload And Process';
+      if (isLoading) {
+        renderMessage(ingestStatus, 'Uploading document and generating embeddings...', 'loading');
+      }
     }
 
     function renderDocumentList() {
@@ -632,8 +654,8 @@
 
     ingestForm.addEventListener('submit', async (event) => {
       event.preventDefault();
-      ingestButton.disabled = true;
       ingestStatus.innerHTML = '';
+      setIngestLoadingState(true);
 
       const formData = new FormData(ingestForm);
 
@@ -658,7 +680,7 @@
       } catch (error) {
         renderMessage(ingestStatus, escapeHtml(error.message), 'error');
       } finally {
-        ingestButton.disabled = false;
+        setIngestLoadingState(false);
       }
     });
 
@@ -668,8 +690,11 @@
         return;
       }
 
-      askButton.disabled = true;
+      setAskLoadingState(true);
       resetAnswerPanel();
+      answerPanel.hidden = false;
+      answerText.textContent = 'Generating answer...';
+      sourcePanel.innerHTML = '';
 
       try {
         const response = await fetch('/ask', {
@@ -696,7 +721,7 @@
         sourcePanel.innerHTML = '';
         answerPanel.hidden = false;
       } finally {
-        askButton.disabled = false;
+        setAskLoadingState(false);
       }
     });
 

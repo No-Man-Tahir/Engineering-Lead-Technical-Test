@@ -21,6 +21,7 @@ class DocumentResponse(BaseModel):
 
 class SourceResponse(BaseModel):
     document_id: str
+    title: str | None = None
     chunk_id: str
     score: float
 

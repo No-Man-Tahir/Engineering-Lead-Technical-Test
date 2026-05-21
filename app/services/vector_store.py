@@ -44,7 +44,6 @@ class InMemoryVectorStore:
                 )
             )
 
-        documents.sort(key=lambda document: document.document_id)
         return documents
 
     def search(

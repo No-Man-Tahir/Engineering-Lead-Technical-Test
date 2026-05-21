@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 
 from app.config import get_settings
@@ -12,19 +14,10 @@ settings = get_settings()
 
 @router.post("", response_model=IngestResponse, status_code=status.HTTP_200_OK)
 async def ingest_document(
-    document_id: str = Form(...),
+    document_id: str | None = Form(default=None),
     file: UploadFile = File(...),
     title: str | None = Form(default=None),
 ) -> IngestResponse:
-    _ = title
-
-    normalized_document_id = document_id.strip()
-    if not normalized_document_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="document_id must not be empty",
-        )
-
     if not file.filename:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -52,6 +45,9 @@ async def ingest_document(
             detail="uploaded file must be valid UTF-8 text",
         ) from exc
 
+    normalized_title = title.strip() if title and title.strip() else None
+    normalized_document_id = _resolve_document_id(document_id)
+
     chunks = chunk_text(
         text=content,
         chunk_size=settings.chunk_size,
@@ -71,7 +67,7 @@ async def ingest_document(
         )
         vector_store.upsert_document(
             document_id=normalized_document_id,
-            title=title.strip() if title else None,
+            title=normalized_title,
             chunks=chunks,
             embeddings=embeddings,
         )
@@ -91,3 +87,10 @@ async def ingest_document(
         document_id=normalized_document_id,
         chunks_created=len(chunks),
     )
+
+
+def _resolve_document_id(document_id: str | None) -> str:
+    if document_id and document_id.strip():
+        return document_id.strip()
+
+    return str(uuid4())
