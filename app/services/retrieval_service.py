@@ -10,8 +10,16 @@ def retrieve_relevant_chunks(
     api_key: str,
     model: str,
     top_k: int,
+    timeout_seconds: float,
+    max_retries: int,
 ) -> list[RetrievedChunk]:
-    question_embedding = embed_texts([question], api_key=api_key, model=model)[0]
+    question_embedding = embed_texts(
+        [question],
+        api_key=api_key,
+        model=model,
+        timeout_seconds=timeout_seconds,
+        max_retries=max_retries,
+    )[0]
     return vector_store.search(
         document_id=document_id,
         query_embedding=question_embedding,

@@ -6,6 +6,8 @@ def embed_texts(
     *,
     api_key: str,
     model: str,
+    timeout_seconds: float,
+    max_retries: int,
 ) -> list[list[float]]:
     if not texts:
         return []
@@ -13,7 +15,11 @@ def embed_texts(
     if not api_key:
         raise RuntimeError("OPENAI_API_KEY is not configured")
 
-    client = OpenAI(api_key=api_key)
+    client = OpenAI(
+        api_key=api_key,
+        timeout=timeout_seconds,
+        max_retries=max_retries,
+    )
 
     try:
         response = client.embeddings.create(

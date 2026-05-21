@@ -28,6 +28,14 @@ def ask_question(payload: AskRequest) -> AskResponse:
             detail="question must not be empty",
         )
 
+    if len(question) > settings.max_question_length:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=(
+                f"question exceeds the {settings.max_question_length} character limit"
+            ),
+        )
+
     if not vector_store.get_document_chunks(document_id):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -41,6 +49,8 @@ def ask_question(payload: AskRequest) -> AskResponse:
             api_key=settings.openai_api_key,
             model=settings.openai_embedding_model,
             top_k=settings.top_k,
+            timeout_seconds=settings.openai_timeout_seconds,
+            max_retries=settings.openai_max_retries,
         )
     except RuntimeError as exc:
         raise HTTPException(
@@ -65,6 +75,8 @@ def ask_question(payload: AskRequest) -> AskResponse:
             chunks=retrieved_chunks,
             api_key=settings.openai_api_key,
             model=settings.openai_chat_model,
+            timeout_seconds=settings.openai_timeout_seconds,
+            max_retries=settings.openai_max_retries,
         )
     except RuntimeError as exc:
         raise HTTPException(

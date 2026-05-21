@@ -81,9 +81,13 @@ Example:
 OPENAI_API_KEY=your-openai-api-key
 OPENAI_CHAT_MODEL=gpt-4.1-mini
 OPENAI_EMBEDDING_MODEL=text-embedding-3-small
+OPENAI_TIMEOUT_SECONDS=30
+OPENAI_MAX_RETRIES=2
 CHUNK_SIZE=1000
 CHUNK_OVERLAP=200
 TOP_K=3
+MAX_FILE_SIZE_BYTES=2000000
+MAX_QUESTION_LENGTH=1000
 ```
 
 4. Start the app.
@@ -114,7 +118,7 @@ docker compose up --build
 
 ## Frontend Flow
 
-1. Upload a `.txt` file with a `document_id` and optional title.
+1. Upload a `.txt` file with an optional title.
 2. The backend generates a UUID-based `document_id` automatically.
 3. Click a document in the library to make it active.
 4. Ask a question against the selected document.
@@ -126,16 +130,19 @@ docker compose up --build
 
 Accepts multipart form data:
 
-- `document_id` optional
 - `title` optional
 - `file` required, `.txt` only
+
+Validation notes:
+
+- file size is limited by `MAX_FILE_SIZE_BYTES`
 
 Example response:
 
 ```json
 {
   "message": "Document ingested successfully",
-  "document_id": "refund-policy",
+  "document_id": "d388c507-6c8c-4d55-a953-c760be1174d1",
   "chunks_created": 4
 }
 ```
@@ -149,7 +156,7 @@ Example response:
 ```json
 [
   {
-    "document_id": "refund-policy",
+    "document_id": "d388c507-6c8c-4d55-a953-c760be1174d1",
     "title": "Refund Policy",
     "chunks_created": 4
   }
@@ -162,10 +169,15 @@ Accepts JSON:
 
 ```json
 {
-  "document_id": "refund-policy",
+  "document_id": "d388c507-6c8c-4d55-a953-c760be1174d1",
   "question": "What does the document say about refunds?"
 }
 ```
+
+Validation notes:
+
+- `question` is limited by `MAX_QUESTION_LENGTH`
+- `document_id` must exist in the current in-memory store
 
 Example response:
 
@@ -174,8 +186,8 @@ Example response:
   "answer": "Refunds are allowed within 30 days of purchase.",
   "sources": [
     {
-      "document_id": "refund-policy",
-      "chunk_id": "refund-policy-0",
+      "document_id": "d388c507-6c8c-4d55-a953-c760be1174d1",
+      "chunk_id": "d388c507-6c8c-4d55-a953-c760be1174d1-0",
       "score": 0.91
     }
   ]
@@ -220,7 +232,7 @@ The vector store is kept in process memory to keep setup simple and focused on t
 
 ### OpenAI for embeddings and answer generation
 
-Using OpenAI keeps the embedding and answer generation code short and readable. The provider-specific logic is kept in dedicated service files so the rest of the app does not depend on SDK details.
+Using OpenAI keeps the embedding and answer generation code short and readable. The provider-specific logic is kept in dedicated service files so the rest of the app does not depend on SDK details. The client is configured with basic timeout and retry settings from environment variables.
 
 ### Document-scoped questions
 
@@ -242,6 +254,7 @@ The frontend is a small server-rendered static page served by FastAPI. It is eno
 - No background processing for large uploads
 - No persistent database or vector index
 - No test suite has been added yet
+- OpenAI retry behavior is basic client-level retry configuration rather than a more advanced resilience layer
 
 ## Production Improvements
 

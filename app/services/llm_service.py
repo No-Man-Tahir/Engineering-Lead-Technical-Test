@@ -13,6 +13,8 @@ def generate_answer_from_context(
     chunks: list[RetrievedChunk],
     api_key: str,
     model: str,
+    timeout_seconds: float,
+    max_retries: int,
 ) -> str:
     if not api_key:
         raise RuntimeError("OPENAI_API_KEY is not configured")
@@ -20,7 +22,11 @@ def generate_answer_from_context(
     if not chunks:
         return FALLBACK_ANSWER
 
-    client = OpenAI(api_key=api_key)
+    client = OpenAI(
+        api_key=api_key,
+        timeout=timeout_seconds,
+        max_retries=max_retries,
+    )
     context = _build_context(chunks)
 
     try:

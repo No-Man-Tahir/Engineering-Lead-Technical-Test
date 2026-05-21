@@ -14,7 +14,6 @@ settings = get_settings()
 
 @router.post("", response_model=IngestResponse, status_code=status.HTTP_200_OK)
 async def ingest_document(
-    document_id: str | None = Form(default=None),
     file: UploadFile = File(...),
     title: str | None = Form(default=None),
 ) -> IngestResponse:
@@ -45,8 +44,16 @@ async def ingest_document(
             detail="uploaded file must be valid UTF-8 text",
         ) from exc
 
+    if len(raw_content) > settings.max_file_size_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=(
+                f"uploaded file exceeds the {settings.max_file_size_bytes} byte limit"
+            ),
+        )
+
     normalized_title = title.strip() if title and title.strip() else None
-    normalized_document_id = _resolve_document_id(document_id)
+    normalized_document_id = str(uuid4())
 
     chunks = chunk_text(
         text=content,
@@ -64,6 +71,8 @@ async def ingest_document(
             chunks,
             api_key=settings.openai_api_key,
             model=settings.openai_embedding_model,
+            timeout_seconds=settings.openai_timeout_seconds,
+            max_retries=settings.openai_max_retries,
         )
         vector_store.upsert_document(
             document_id=normalized_document_id,
@@ -87,10 +96,3 @@ async def ingest_document(
         document_id=normalized_document_id,
         chunks_created=len(chunks),
     )
-
-
-def _resolve_document_id(document_id: str | None) -> str:
-    if document_id and document_id.strip():
-        return document_id.strip()
-
-    return str(uuid4())

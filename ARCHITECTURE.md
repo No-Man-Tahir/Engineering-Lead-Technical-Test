@@ -64,7 +64,7 @@ Creates the FastAPI app and registers API and UI routes.
 ```text
 Browser or client
   -> POST /ingest
-  -> validate document_id and file
+  -> validate file and size limits
   -> decode uploaded .txt file
   -> chunking_service.chunk_text
   -> embedding_service.embed_texts
@@ -76,14 +76,15 @@ Key behavior:
 
 - only `.txt` files are accepted
 - UTF-8 decoding is required
-- an existing `document_id` is replaced in the current in-memory store
+- oversized uploads are rejected before embedding generation
+- a UUID-based `document_id` is generated on ingest
 
 ## `/ask`
 
 ```text
 Browser or client
   -> POST /ask
-  -> validate document_id and question
+  -> validate document_id, question, and question length
   -> retrieval_service.retrieve_relevant_chunks
       -> embedding_service.embed_texts(question)
       -> vector_store.search(document_id)
@@ -96,6 +97,7 @@ Key behavior:
 - the request is scoped to one `document_id`
 - only retrieved chunks are passed into the LLM prompt
 - if there is not enough support in context, the system instructs the model to return a clear fallback answer
+- OpenAI calls use basic client-level timeout and retry settings
 
 ## Data Model
 
